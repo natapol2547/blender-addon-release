@@ -47,14 +47,14 @@ runs:
 
     - name: Download artifact with defined artifact_name
       if: ${{ inputs.artifact_name != '' }}
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
         path: ./out
 
     - name: Download artifact with repository name
       if: ${{ inputs.artifact_name == '' }}
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: ${{ github.event.repository.name }}
         path: ./out
