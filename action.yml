@@ -19,6 +19,9 @@ inputs:
   release_name:
     description: 'Name of the release - will be used in title of the release. If left empty, action will use repository name.'
     default: ''
+  addon_folder_name:
+    description: 'Name of the folder where the addon files will be stored.'
+    default: 'out'
 
 runs:
   using: "composite"
@@ -41,8 +44,8 @@ runs:
           echo "RELEASE_SUFFIX=" >> $GITHUB_ENV
         fi
 
-    - name: Create out directory
-      run: mkdir out
+    - name: Create addon directory
+      run: mkdir ${{ inputs.addon_folder_name }}
       shell: bash
 
     - name: Download artifact with defined artifact_name
@@ -50,23 +53,23 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
-        path: ./out
+        path: ./${{ inputs.addon_folder_name }}
 
     - name: Download artifact with repository name
       if: ${{ inputs.artifact_name == '' }}
       uses: actions/download-artifact@v4
       with:
         name: ${{ github.event.repository.name }}
-        path: ./out
+        path: ./${{ inputs.addon_folder_name }}
 
-    - name: Zip contents of out
+    - name: Zip contents of addon folder
       shell: bash
       run: |
-        zip -r ./out/${{ inputs.artifact_name }}-v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}.zip ./out/
+        zip -r ./${{ inputs.addon_folder_name }}/${{ inputs.artifact_name }}-v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}.zip ./${{ inputs.addon_folder_name }}/
       
     - name: LS
       shell: bash
-      run: ls ./out
+      run: ls ./${{ inputs.addon_folder_name }}
 
     - name: Release
       uses: softprops/action-gh-release@v1
@@ -75,5 +78,4 @@ runs:
         name: ${{ env.RELEASE_NAME }} v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}
         prerelease: ${{ inputs.release_stage != 'gold' && 'true' || 'false' }}
         tag_name: v${{inputs.version}}
-        files: ./out/${{ inputs.artifact_name }}-v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}.zip
-
+        files: ./${{ inputs.addon_folder_name }}/${{ inputs.artifact_name }}-v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}.zip
