@@ -1,11 +1,9 @@
 name: 'Blender Addon Release'
 description: 'Action to automatically build the Blender add-on and store the resulting .zip artifact.'
 author: 'Andreas Gajdosik, BlenderKit'
-
 branding:
   icon: 'box'
   color: 'orange'
-
 inputs:
   version:
     description: 'Version of the release, format: X.Y.Z (major.minor.patch).'
@@ -22,7 +20,6 @@ inputs:
   addon_folder_name:
     description: 'Name of the folder where the addon files will be stored.'
     default: 'out'
-
 runs:
   using: "composite"
   steps:
@@ -34,7 +31,6 @@ runs:
         else
           echo "RELEASE_NAME=${{ inputs.release_name }}" >> $GITHUB_ENV
         fi
-
     - name: Set release name suffix
       shell: bash
       run: |
@@ -43,25 +39,29 @@ runs:
         else
           echo "RELEASE_SUFFIX=" >> $GITHUB_ENV
         fi
-
+    - name: Set tag name
+      shell: bash
+      run: |
+        if [ "${{ inputs.release_stage }}" != "gold" ]; then
+          echo "TAG_NAME=v${{ inputs.version }}_${{ inputs.release_stage }}" >> $GITHUB_ENV
+        else
+          echo "TAG_NAME=v${{ inputs.version }}" >> $GITHUB_ENV
+        fi
     - name: Create addon directory
       run: mkdir ${{ inputs.addon_folder_name }}
       shell: bash
-
     - name: Download artifact with defined artifact_name
       if: ${{ inputs.artifact_name != '' }}
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact_name }}
         path: ./${{ inputs.addon_folder_name }}
-
     - name: Download artifact with repository name
       if: ${{ inputs.artifact_name == '' }}
       uses: actions/download-artifact@v4
       with:
         name: ${{ github.event.repository.name }}
         path: ./${{ inputs.addon_folder_name }}
-
     - name: Zip contents of addon folder
       shell: bash
       run: |
@@ -70,12 +70,11 @@ runs:
     - name: LS
       shell: bash
       run: ls ./${{ inputs.addon_folder_name }}
-
     - name: Release
       uses: softprops/action-gh-release@v1
       with:
         draft: true
         name: ${{ env.RELEASE_NAME }} v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}
         prerelease: ${{ inputs.release_stage != 'gold' && 'true' || 'false' }}
-        tag_name: v${{inputs.version}}
+        tag_name: ${{ env.TAG_NAME }}
         files: ./${{ inputs.addon_folder_name }}/${{ inputs.artifact_name }}-v${{ inputs.version }}${{ env.RELEASE_SUFFIX }}.zip
